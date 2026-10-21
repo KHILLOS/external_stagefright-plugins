@@ -1,0 +1,263 @@
+package {
+    default_applicable_licenses: ["external_stagefright-plugins_license"],
+}
+
+// Added automatically by a large-scale-change
+// See: http://go/android-license-faq
+license {
+    name: "external_stagefright-plugins_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-Apache-2.0",
+    ],
+    license_text: [
+        "NOTICE",
+    ],
+}
+
+// ============================================================
+// Header library for C2 component headers
+// ============================================================
+cc_library_headers {
+    name: "ffmpeg_codec2_headers",
+
+    export_include_dirs: ["codec2"],
+
+    header_libs: ["libavcodec"],
+    export_header_lib_headers: ["libavcodec"],
+
+    vendor: true,
+}
+
+// ============================================================
+// VA-API hardware acceleration static library (x86 only)
+// ============================================================
+cc_library_static {
+    name: "libffmpeg_hwaccel",
+
+    srcs: ["utils/ffmpeg_hwaccel.c"],
+
+    shared_libs: [
+        "libavcodec",
+        "libavutil",
+        "libcutils",
+        "libdrm",
+        "liblog",
+        "libva",
+    ],
+
+    cflags: [
+        "-Werror",
+        "-Wall",
+    ],
+
+    target: {
+        android_x86: {
+            enabled: true,
+        },
+        android_x86_64: {
+            enabled: true,
+        },
+    },
+    vendor: true,
+}
+
+// ============================================================
+// Shared utilities library
+// ============================================================
+cc_library_static {
+    name: "libffmpeg_utils",
+
+    srcs: ["utils/ffmpeg_utils.cpp"],
+
+    shared_libs: [
+        "libavcodec",
+        "libavutil",
+        "libcutils",
+        "liblog",
+    ],
+
+    export_include_dirs: ["utils"],
+    export_shared_lib_headers: ["libavcodec"],
+
+    // Workaround for inline assembly tricks in FFmpeg which don't play nice
+    // with Clang when included from C++
+    clang_cflags: ["-DAVUTIL_ARM_INTREADWRITE_H"],
+
+    cflags: [
+        "-Werror",
+        "-Wall",
+    ],
+
+    vendor: true,
+}
+
+// ============================================================
+// MediaExtractor plugin: libffmpeg_extractor
+// ============================================================
+cc_library_shared {
+    name: "libffmpeg_extractor",
+
+    defaults: ["extractor-defaults"],
+
+    srcs: [
+        "extractor/FFmpegExtractor.cpp",
+        "extractor/extractor_utils.cpp",
+        "extractor/ffmpeg_source.cpp",
+    ],
+
+    shared_libs: [
+        "libavcodec",
+        "libavformat",
+        "libavutil",
+        "libavfilter",
+        "libswscale",
+        "libswresample",
+        "libcutils",
+        "liblog",
+        "libmediandk",
+        "libstagefright_foundation",
+        "libutils",
+        "libffmpeg_utils",
+    ],
+
+    header_libs: [
+        "ffmpeg_codec2_headers",
+        "libmedia_headers",
+    ],
+
+    cflags: [
+        "-Werror",
+        "-Wall",
+    ],
+
+    vendor: true,
+}
+
+// ============================================================
+// C2 FFmpeg Service (AIDL only)
+// ============================================================
+cc_binary {
+    name: "android.hardware.media.c2-ffmpeg-service",
+
+    vendor: true,
+    relative_install_path: "hw",
+
+    srcs: [
+        "codec2/C2FFMPEGAudioDecodeComponent.cpp",
+        "codec2/C2FFMPEGAudioDecodeInterface.cpp",
+        "codec2/C2FFMPEGVideoDecodeComponent.cpp",
+        "codec2/C2FFMPEGVideoDecodeInterface.cpp",
+        "codec2/C2FFMPEGVideoUtils.cpp",
+        "codec2/service.cpp",
+    ],
+
+    shared_libs: [
+        "android.hardware.media.c2-V1-ndk",
+        "libavcodec",
+        "libavfilter",
+        "libavutil",
+        "libavservices_minijail",
+        "libbase",
+        "libbinder",
+        "libbinder_ndk",
+        "libcodec2_aidl",
+        "libcodec2_soft_common",
+        "libcodec2_vndk",
+        "libffmpeg_utils",
+        "liblog",
+        "libstagefright_foundation",
+        "libswresample",
+        "libswscale",
+        "libutils",
+    ],
+
+    header_libs: [
+        "ffmpeg_codec2_headers",
+        "libva_headers",
+    ],
+
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-Wno-deprecated-enum-enum-conversion",
+    ],
+
+    init_rc: ["android.hardware.media.c2-ffmpeg-service.rc"],
+    vintf_fragments: ["manifest_media_c2_ffmpeg.xml"],
+    required: ["android.hardware.media.c2-ffmpeg.policy"],
+
+    target: {
+        android_x86: {
+            enabled: true,
+        },
+        android_x86_64: {
+            enabled: true,
+        },
+    },
+}
+
+// ============================================================
+// C2 FFmpeg Service seccomp policy (per-architecture)
+// ============================================================
+cc_defaults {
+    name: "android.hardware.media.c2-ffmpeg.seccomp_policy-defaults",
+
+    srcs: [
+        "codec2/seccomp_policy/android.hardware.media.c2-ffmpeg-x86.policy",
+        "codec2/seccomp_policy/android.hardware.media.c2-ffmpeg-x86_64.policy",
+    ],
+}
+
+prebuilt_etc {
+    name: "android.hardware.media.c2-ffmpeg.policy",
+
+    defaults: ["android.hardware.media.c2-ffmpeg.seccomp_policy-defaults"],
+
+    sub_dir: "seccomp_policy",
+    filename_from_src: true,
+
+    vendor: true,
+}
+
+// ============================================================
+// MediaCodecs XML for C2
+// ============================================================
+prebuilt_etc {
+    name: "media_codecs_ffmpeg_c2.xml",
+
+    src: "codec2/media_codecs_ffmpeg_c2.xml",
+
+    sub_dir: "",
+    filename_from_src: true,
+
+    vendor: true,
+}
+
+// ============================================================
+// VINTF manifest for C2 service (AIDL only)
+// ============================================================
+prebuilt_etc {
+    name: "manifest_media_c2_ffmpeg.xml",
+
+    src: "codec2/manifest_media_c2_ffmpeg.xml",
+
+    sub_dir: "vintf/manifest",
+    filename_from_src: true,
+
+    vendor: true,
+}
+
+// ============================================================
+// Init RC for C2 service
+// ============================================================
+prebuilt_etc {
+    name: "android.hardware.media.c2-ffmpeg-service.rc",
+
+    src: "codec2/android.hardware.media.c2-ffmpeg-service.rc",
+
+    sub_dir: "init/hw",
+    filename_from_src: true,
+
+    vendor: true,
+}

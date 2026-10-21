@@ -1,0 +1,16 @@
+{
+  "name": "stagefright-plugins",
+  "description": "FFmpeg-based media plugins for Android Stagefright framework (Codec2, MediaExtractor)",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "license_file": "LICENSE.txt",
+  "vendor": "KhillOS Project",
+  "url": "https://github.com/KHILLOS/external_stagefright-plugins",
+  "third_party": {
+    "name": "stagefright-plugins",
+    "url": "https://github.com/omxcodec/stagefright-plugins",
+    "version": "omxcodec fork with BlissOS modifications",
+    "license": "Apache-2.0",
+    "license_file": "LICENSE.txt"
+  }
+}

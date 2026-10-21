@@ -1,0 +1,11 @@
+# KhillOS Project Owners for external_stagefright-plugins
+# This file follows AOSP OWNERS format
+
+# Primary maintainers
+khillos-maintainers@googlegroups.com
+
+# Media framework experts
+media-framework-team@googlegroups.com
+
+# x86 hardware experts
+android-x86-team@googlegroups.com
