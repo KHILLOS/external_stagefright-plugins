@@ -23,8 +23,8 @@ cc_library_headers {
 
     export_include_dirs: ["codec2"],
 
-    header_libs: ["libavcodec"],
-    export_header_lib_headers: ["libavcodec"],
+    header_libs: ["libavcodec_headers"],
+    export_header_lib_headers: ["libavcodec_headers"],
 
     vendor: true,
 }
@@ -65,7 +65,7 @@ cc_library_static {
 // ============================================================
 // Shared utilities library
 // ============================================================
-cc_library_static {
+cc_library_shared {
     name: "libffmpeg_utils",
 
     srcs: ["utils/ffmpeg_utils.cpp"],
@@ -82,9 +82,8 @@ cc_library_static {
 
     // Workaround for inline assembly tricks in FFmpeg which don't play nice
     // with Clang when included from C++
-    clang_cflags: ["-DAVUTIL_ARM_INTREADWRITE_H"],
-
     cflags: [
+        "-DAVUTIL_ARM_INTREADWRITE_H",
         "-Werror",
         "-Wall",
     ],
@@ -97,8 +96,6 @@ cc_library_static {
 // ============================================================
 cc_library_shared {
     name: "libffmpeg_extractor",
-
-    defaults: ["extractor-defaults"],
 
     srcs: [
         "extractor/FFmpegExtractor.cpp",
@@ -121,6 +118,10 @@ cc_library_shared {
         "libffmpeg_utils",
     ],
 
+    static_libs: [
+        "libstagefright_metadatautils",
+    ],
+
     header_libs: [
         "ffmpeg_codec2_headers",
         "libmedia_headers",
@@ -129,6 +130,7 @@ cc_library_shared {
     cflags: [
         "-Werror",
         "-Wall",
+        "-fvisibility=hidden",
     ],
 
     vendor: true,
@@ -183,9 +185,9 @@ cc_binary {
         "-Wno-deprecated-enum-enum-conversion",
     ],
 
-    init_rc: ["android.hardware.media.c2-ffmpeg-service.rc"],
-    vintf_fragments: ["manifest_media_c2_ffmpeg.xml"],
-    required: ["android.hardware.media.c2-ffmpeg.policy"],
+    init_rc: ["codec2/android.hardware.media.c2-ffmpeg-service.rc"],
+    vintf_fragments: ["codec2/manifest_media_c2_ffmpeg.xml"],
+    // Note: seccomp policy is now per-architecture via prebuilt_etc modules
 
     target: {
         android_x86: {
@@ -200,24 +202,30 @@ cc_binary {
 // ============================================================
 // C2 FFmpeg Service seccomp policy (per-architecture)
 // ============================================================
-cc_defaults {
-    name: "android.hardware.media.c2-ffmpeg.seccomp_policy-defaults",
-
-    srcs: [
-        "codec2/seccomp_policy/android.hardware.media.c2-ffmpeg-x86.policy",
-        "codec2/seccomp_policy/android.hardware.media.c2-ffmpeg-x86_64.policy",
-    ],
+prebuilt_etc {
+    name: "android.hardware.media.c2-ffmpeg.policy.x86",
+    src: "codec2/seccomp_policy/android.hardware.media.c2-ffmpeg-x86.policy",
+    sub_dir: "seccomp_policy",
+    filename_from_src: true,
+    vendor: true,
+    target: {
+        android_x86: {
+            enabled: true,
+        },
+    },
 }
 
 prebuilt_etc {
-    name: "android.hardware.media.c2-ffmpeg.policy",
-
-    defaults: ["android.hardware.media.c2-ffmpeg.seccomp_policy-defaults"],
-
+    name: "android.hardware.media.c2-ffmpeg.policy.x86_64",
+    src: "codec2/seccomp_policy/android.hardware.media.c2-ffmpeg-x86_64.policy",
     sub_dir: "seccomp_policy",
     filename_from_src: true,
-
     vendor: true,
+    target: {
+        android_x86_64: {
+            enabled: true,
+        },
+    },
 }
 
 // ============================================================
